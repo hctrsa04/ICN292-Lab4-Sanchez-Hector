@@ -1,0 +1,393 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[a4paper, margin=2.2cm]{geometry}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{float}
+
+\definecolor{usmblue}{RGB}{0, 75, 135}
+\definecolor{headerbg}{RGB}{240, 244, 248}
+\definecolor{codebg}{RGB}{248, 249, 250}
+\definecolor{codeframe}{RGB}{220, 224, 230}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=usmblue,
+    urlcolor=usmblue
+}
+
+\lstset{
+    language=SQL,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codeframe},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{usmblue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{teal},
+    showstringspaces=false,
+    breaklines=true,
+    tabsize=2,
+    extendedchars=true,
+    literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {Ñ}{{\~N}}1 {ñ}{{\~n}}1 {Ó}{{\'O}}1
+}
+
+% Macro para incluir imagen si existe; de lo contrario genera un placeholder sin error
+\newcommand{\IncludegraphicsSafe}[3]{%
+  \IfFileExists{#2}{%
+    \includegraphics[width=#1]{#2}%
+  }{%
+    \framebox[#1][c]{\rule{0pt}{35mm}\strut #3}%
+  }%
+}
+
+\setlist[itemize]{leftmargin=*, topsep=3pt, itemsep=2pt}
+\setlist[enumerate]{leftmargin=*, topsep=3pt, itemsep=2pt}
+
+\begin{document}
+
+% ----------------------------------------------------
+% PORTADA INSTITUCIONAL (HOJA EXCLUSIVA)
+% ----------------------------------------------------
+\begin{titlepage}
+    \centering
+    % Logo de la Universidad
+    \IncludegraphicsSafe{75mm}{logo_usm.png}{[Logo USM: logo\_usm.png]}
+    
+    \vspace{10mm}
+    
+    {\bfseries \Large Universidad Técnica Federico Santa María}\\[4pt]
+    {\bfseries \large Departamento de Industrias}\\[2pt]
+    {\small Campus Vitacura -- Santiago, Chile}\\[15mm]
+    
+    {\Large \textbf{Sistemas de Información para la Gestión (ICN-292)}}\\[3pt]
+    {\small Semestre 2026/02}\\[15mm]
+    
+    \hrule height 1.5pt \vspace{6mm}
+    {\LARGE \bfseries \color{usmblue} Entregable SQL (1/2)} \\[6pt]
+    {\large \textbf{Laboratorio 4: Base de Datos Austral Editores}}
+    \vspace{6mm} \hrule height 1.5pt
+    
+    \vfill
+    
+    \begin{table}[h!]
+    \centering
+    \begin{tabularx}{0.85\textwidth}{l X}
+        \textbf{Estudiante:} & [Nombre Completo del Estudiante] \\
+        \textbf{Rol USM:} & [Rol USM] \\
+        \textbf{Profesores:} & José Miguel González \\
+        & Patricio Cifuentes \\
+        & José Luis Sáez Tamayo \\
+        \textbf{Fecha de Entrega:} & 7 de Noviembre de 2026 \\
+        \textbf{Repositorio GitHub:} & \url{https://github.com/hctrsa04/ICN292-Lab4-Sanchez-Hector.git} \\
+    \end{tabularx}
+    \end{table}
+    
+    \vfill
+\end{titlepage}
+
+\newpage
+
+% ----------------------------------------------------
+% ENTREGABLE 1
+% ----------------------------------------------------
+\section*{Entregable 1: Creación de la Base de Datos y Modelo Entidad--Relación}
+
+\subsection*{1.1 Reconstrucción de la Base de Datos \texttt{austral}}
+De acuerdo con el escenario planteado para **Austral Editores**, se construyó el script SQL completo que inicializa la base de datos desde un estado limpio e incorpora tanto las tablas base del catálogo inicial (\texttt{autores} y \texttt{libros}) como las tablas adicionales requeridas (\texttt{colecciones} y \texttt{pagos}).
+
+\begin{lstlisting}
+DROP DATABASE IF EXISTS austral;
+CREATE DATABASE austral;
+USE austral;
+
+-- Tabla 1: autores
+CREATE TABLE autores (
+    id_autor INT AUTO_INCREMENT,
+    nombre VARCHAR(80) NOT NULL,
+    pais VARCHAR(60),
+    genero ENUM('Cómic', 'Ensayo', 'Infantil', 'Novela', 'Poesía') NOT NULL,
+    PRIMARY KEY (id_autor)
+);
+
+-- Tabla 2: colecciones
+CREATE TABLE colecciones (
+    id_coleccion INT AUTO_INCREMENT,
+    titulo VARCHAR(120) NOT NULL,
+    fecha_publicacion DATE NOT NULL,
+    PRIMARY KEY (id_coleccion)
+);
+
+-- Tabla 3: libros
+CREATE TABLE libros (
+    id_libro INT AUTO_INCREMENT,
+    id_autor INT,
+    id_coleccion INT,
+    titulo VARCHAR(120) NOT NULL,
+    paginas INT,
+    ejemplares_vendidos INT,
+    anio INT,
+    PRIMARY KEY (id_libro),
+    FOREIGN KEY (id_autor) REFERENCES autores(id_autor),
+    FOREIGN KEY (id_coleccion) REFERENCES colecciones(id_coleccion)
+);
+
+-- Tabla 4: pagos
+CREATE TABLE pagos (
+    id_pago INT AUTO_INCREMENT,
+    id_autor INT,
+    fecha_pago DATE NOT NULL,
+    monto DECIMAL(10,2) NOT NULL,
+    PRIMARY KEY (id_pago),
+    FOREIGN KEY (id_autor) REFERENCES autores(id_autor)
+);
+\end{lstlisting}
+
+\subsection*{1.2 Modelo Entidad--Relación Reconstruido}
+A través de la función de ingeniería inversa de MySQL Workbench (\textit{Database > Reverse Engineer...}), se generó el diagrama Entidad--Relación completo con la vinculación mediante claves foráneas (\texttt{FOREIGN KEY}) entre las entidades \texttt{autores}, \texttt{libros}, \texttt{colecciones} y \texttt{pagos}.
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.75\textwidth}{eerr_austral_img.png}{[Diagrama ER: modelo\_er.png]}
+    \caption{Modelo Entidad--Relación de la base de datos austral reconstruido en MySQL Workbench.}
+    \label{fig:modelo_er}
+\end{figure}
+
+% ----------------------------------------------------
+% ENTREGABLE 2
+% ----------------------------------------------------
+\section*{Entregable 2: Consultas SQL Desarrolladas y Evidencia de Ejecución}
+
+\subsection*{Consulta 1}
+\textbf{Requerimiento:} Muestre el nombre y el género de los autores cuyo país no es Chile, incluyendo a quien no tiene país registrado, ordenados por nombre. En el informe explique, en una línea, qué devuelve la comparación \texttt{pais <> 'Chile'} y por qué.
+
+\begin{lstlisting}
+SELECT nombre, genero 
+FROM autores 
+WHERE pais <> 'Chile' OR pais IS NULL 
+ORDER BY nombre ASC;
+\end{lstlisting}
+
+\textbf{Explicación requerida:} La comparación \texttt{pais <> 'Chile'} descarta por defecto los valores \texttt{NULL} (como el de Kenji Arakawa) porque en SQL ningún valor vacío se evalúa como verdadero ni falso frente a operadores relacionales, haciendo obligatorio incluir explícitamente \texttt{OR pais IS NULL}.
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.65\textwidth}{consulta_1.png}{[Evidencia MySQL Workbench: consulta\_1.png]}
+    \caption{Resultado de la Consulta 1 en MySQL Workbench mostrando autores cuyo país difiere de Chile o es nulo.}
+    \label{fig:consulta_1}
+\end{figure}
+
+\subsection*{Consulta 2}
+\textbf{Requerimiento:} Liste el título y las páginas de los libros que tienen entre 190 y 220 páginas, incluidos los dos valores, de menor a mayor número de páginas.
+
+\begin{lstlisting}
+SELECT titulo, paginas 
+FROM libros 
+WHERE paginas BETWEEN 190 AND 220 
+ORDER BY paginas ASC;
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.65\textwidth}{consulta_2.png}{[Evidencia MySQL Workbench: consulta\_2.png]}
+    \caption{Resultado de la Consulta 2 listando libros con páginas en el rango [190, 220].}
+    \label{fig:consulta_2}
+\end{figure}
+
+\subsection*{Consulta 3}
+\textbf{Requerimiento:} Entregue una sola fila con el número de libros del catálogo, la suma de ejemplares vendidos, el promedio de páginas, el año más antiguo y la mayor cantidad de ejemplares vendidos de un libro. Cada columna lleva un alias.
+
+\begin{lstlisting}
+SELECT 
+    COUNT(*) AS total_libros, 
+    SUM(ejemplares_vendidos) AS total_vendidos, 
+    AVG(paginas) AS promedio_paginas, 
+    MIN(anio) AS anio_mas_antiguo, 
+    MAX(ejemplares_vendidos) AS max_vendidos 
+FROM libros;
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.65\textwidth}{consulta_3.png}{[Evidencia MySQL Workbench: consulta\_3.png]}
+    \caption{Resultado de la Consulta 3 con funciones de agregación sobre la tabla libros.}
+    \label{fig:consulta_3}
+\end{figure}
+
+\subsection*{Consulta 4}
+\textbf{Requerimiento:} Liste los géneros distintos de los autores, una vez cada uno, en orden alfabético.
+
+\begin{lstlisting}
+SELECT DISTINCT genero 
+FROM autores 
+ORDER BY genero ASC;
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.50\textwidth}{consulta_4.png}{[Evidencia MySQL Workbench: consulta\_4.png]}
+    \caption{Resultado de la Consulta 4 mostrando la lista de géneros sin duplicados.}
+    \label{fig:consulta_4}
+\end{figure}
+
+\subsection*{Consulta 5}
+\textbf{Requerimiento:} Muestre el nombre de cada autor que tiene más de un libro publicado en 2024 y cuántos son. Ordene por nombre.
+
+\begin{lstlisting}
+SELECT 
+    a.nombre, 
+    COUNT(*) AS libros_2024 
+FROM autores a 
+JOIN libros l ON a.id_autor = l.id_autor 
+WHERE l.anio = 2024 
+GROUP BY a.id_autor, a.nombre 
+HAVING COUNT(*) > 1 
+ORDER BY a.nombre ASC;
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.65\textwidth}{consulta_5.png}{[Evidencia MySQL Workbench: consulta\_5.png]}
+    \caption{Resultado de la Consulta 5 filtrando autores agrupados con más de una publicación en 2024.}
+    \label{fig:consulta_5}
+\end{figure}
+
+\subsection*{Consulta 6}
+\textbf{Requerimiento:} Liste el título y los ejemplares vendidos de los libros de 2024 que superan los 2000 ejemplares, de mayor a menor. Muestre solo los tres primeros.
+
+\begin{lstlisting}
+SELECT titulo, ejemplares_vendidos 
+FROM libros 
+WHERE anio = 2024 AND ejemplares_vendidos > 2000 
+ORDER BY ejemplares_vendidos DESC 
+LIMIT 3;
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.65\textwidth}{consulta_6.png}{[Evidencia MySQL Workbench: consulta\_6.png]}
+    \caption{Resultado de la Consulta 6 listando los 3 libros más vendidos del año 2024.}
+    \label{fig:consulta_6}
+\end{figure}
+
+\subsection*{Consulta 7}
+\textbf{Requerimiento:} Inserte el libro \texttt{'Papel Mojado'}, de Rodrigo Bahamonde, con 260 páginas, 50 ejemplares vendidos y año 2024. Después elimínelo con un \texttt{DELETE} que filtre por título. Escriba un \texttt{SELECT} antes y otro después.
+
+\begin{lstlisting}
+-- 1. Insercion
+SET SQL_SAFE_UPDATES = 0;
+INSERT INTO libros (id_autor, id_coleccion, titulo, paginas, ejemplares_vendidos, anio) 
+VALUES (3, 1, 'Papel Mojado', 260, 50, 2024);
+
+-- 2. SELECT previo
+SELECT * FROM libros WHERE titulo = 'Papel Mojado';
+
+-- 3. DELETE
+DELETE FROM libros WHERE titulo = 'Papel Mojado';
+SET SQL_SAFE_UPDATES = 1;
+
+-- 4. SELECT posterior
+SELECT * FROM libros WHERE titulo = 'Papel Mojado';
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.70\textwidth}{consulta_7.png}{[Evidencia MySQL Workbench: consulta\_7.png]}
+    \caption{Resultado de la Consulta 7 evidenciando la inserción previa y posterior eliminación del registro.}
+    \label{fig:consulta_7}
+\end{figure}
+
+\subsection*{Consulta 8}
+\textbf{Requerimiento:} Sume 100 ejemplares vendidos a \texttt{'Cielo de Enero'}. El \texttt{UPDATE} debe calcular el valor nuevo a partir del actual. Entregue tres capturas: el \texttt{SELECT} previo, el \texttt{UPDATE} y el \texttt{SELECT} posterior.
+
+\begin{lstlisting}
+-- 1. SELECT previo
+SELECT titulo, ejemplares_vendidos 
+FROM libros 
+WHERE titulo = 'Cielo de Enero';
+
+-- 2. UPDATE
+SET SQL_SAFE_UPDATES = 0;
+UPDATE libros 
+SET ejemplares_vendidos = ejemplares_vendidos + 100 
+WHERE titulo = 'Cielo de Enero';
+SET SQL_SAFE_UPDATES = 1;
+
+-- 3. SELECT posterior
+SELECT titulo, ejemplares_vendidos 
+FROM libros 
+WHERE titulo = 'Cielo de Enero';
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.70\textwidth}{consulta_8.png}{[Evidencia MySQL Workbench: consulta\_8.png]}
+    \caption{Resultado de la Consulta 8 confirmando la actualización calculada sobre los ejemplares vendidos.}
+    \label{fig:consulta_8}
+\end{figure}
+
+\subsection*{Consulta 9}
+\textbf{Requerimiento:} Liste el título de cada libro, el título de la colección a la que pertenece y la fecha de publicación de la colección.
+
+\begin{lstlisting}
+SELECT 
+    l.titulo AS libro, 
+    c.titulo AS coleccion, 
+    c.fecha_publicacion 
+FROM libros l 
+JOIN colecciones c ON l.id_coleccion = c.id_coleccion;
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.70\textwidth}{consulta_9.png}{[Evidencia MySQL Workbench: consulta\_9.png]}
+    \caption{Resultado de la Consulta 9 mostrando el cruce (JOIN) entre libros y colecciones.}
+    \label{fig:consulta_9}
+\end{figure}
+
+\subsection*{Consulta 10}
+\textbf{Requerimiento:} Liste los pagos hechos a los autores con fecha y monto, y luego muestre el total pagado a cada autor.
+
+\begin{lstlisting}
+-- Sentencia 1: Detalle de pagos
+SELECT 
+    a.nombre, 
+    p.fecha_pago, 
+    p.monto 
+FROM pagos p 
+JOIN autores a ON p.id_autor = a.id_autor;
+
+-- Sentencia 2: Total pagado por autor
+SELECT 
+    a.nombre, 
+    SUM(p.monto) AS total_pagado 
+FROM pagos p 
+JOIN autores a ON p.id_autor = a.id_autor 
+GROUP BY a.id_autor, a.nombre;
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.65\textwidth}{consulta_10P.png}{[Evidencia MySQL Workbench: consulta\_10P.png]}
+    \caption{Detalle de los pagos individuales registrados por autor (Sentencia 1).}
+    \label{fig:consulta_10p}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \IncludegraphicsSafe{0.65\textwidth}{consulta_10S.png}{[Evidencia MySQL Workbench: consulta\_10S.png]}
+    \caption{Monto total acumulado pagado a cada autor (Sentencia 2).}
+    \label{fig:consulta_10s}
+\end{figure}
+
+\end{document}
